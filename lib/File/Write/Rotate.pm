@@ -8,7 +8,7 @@ use Log::Any '$log';
 use Fcntl ':flock';
 use Time::HiRes 'time';
 
-our $VERSION = '0.01'; # VERSION
+our $VERSION = '0.02'; # VERSION
 
 sub new {
     my $class = shift;
@@ -345,7 +345,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 
@@ -371,16 +371,9 @@ version 0.01
 =head1 DESCRIPTION
 
 This module can be used to write to file, usually for logging, that can rotate
-itself. File will be opened in append mode. Locking will be done (but can be
-disabled) to avoid conflict when there are multiple writers. Rotation can be
-done by size (after a certain size is reached), by time (daily/monthly/yearly),
-or both.
-
-This code for this module is based on L<Log::Dispatch::FileRotate>. For the
-purpose of reducing startup overhead and dependencies, I simplify and strip a
-few things including: L<Log::Dispatch>-specific stuffs, the use of
-L<Date::Manip>, and some features that I do not need like date pattern. The
-result is a module that is less flexible, but it fits all my current needs.
+itself. File will be opened in append mode. Locking will be done to avoid
+conflict when there are multiple writers. Rotation can be done by size (after a
+certain size is reached), by time (daily/monthly/yearly), or both.
 
 I first wrote this module for logging script STDERR output to files (see
 L<Tie::Handle::FileRotate>).
@@ -466,30 +459,37 @@ keep C<.1> file, and so on.
 
 =head2 $fwr->write(@args)
 
-Write to file. Will automatically rotate if period changes or file size exceeds
-specified limit. When rotating, will only keep a specified number of histories
-and delete the older ones. Uses locking, so multiple writers do not clobber one
-another. Lock file is named C<< <prefix> >>C<.lck>.
+Write to file. Will automatically rotate file if period changes or file size
+exceeds specified limit. When rotating, will only keep a specified number of
+histories and delete the older ones. Uses locking, so multiple writers do not
+clobber one another. Lock file is named C<< <prefix> >>C<.lck>. Will wait for up
+to 1 minute to acquire lock, will die if failed to acquire lock.
+
+Does not append newline so you'll have to do it yourself.
 
 =head2 $fwr->compress
 
 Compress old rotated files. Currently uses B<pigz> or B<gzip> program to do the
 compression. Extension given to compressed file is C<.gz>.
 
-Will not lock files, but will create C<< <prefix> >>C<-compress.pid> PID file to
-prevent multiple compression processes running and to signal to writer to
+Normally, should be done using a separate process so as to avoid blocking the
+writers.
+
+Will not lock writers, but will create C<< <prefix> >>C<-compress.pid> PID file
+to prevent multiple compression processes running and to signal the writers to
 postpone rotation.
 
-After compression is finished, will remove the PID file.
+After compression is finished, will remove the PID file, so rotation can be done
+again on the next C<write()> if necessary.
 
 =head1 SEE ALSO
 
-L<Log::Dispatch::FileRotate>, from which the code of this module is based on.
-Differences between File::Write::Rotate (FWR) and Log::Dispatch::FileRotate
-(LDFR) are as follows. Firstly, FWR is not part of L<Log::Dispatch> family. FWR
-does not use L<Date::Manip> (to be tinier) and does not support DatePattern;
-instead, FWR replaces it with a simple daily/monthly/yearly period. FWR supports
-compressing and rotating compressed old files.
+L<Log::Dispatch::FileRotate>, which inspires this module. Differences between
+File::Write::Rotate (FWR) and Log::Dispatch::FileRotate (LDFR) are as follows.
+Firstly, FWR is not part of the L<Log::Dispatch> family. FWR does not use
+L<Date::Manip> (to be tinier) and does not support DatePattern; instead, FWR
+replaces it with a simple daily/monthly/yearly period. FWR supports compressing
+and rotating compressed old files.
 
 L<Tie::Handle::FileRotate>, which uses this module.
 

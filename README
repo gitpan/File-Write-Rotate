@@ -2,7 +2,7 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    version 0.01
+    version 0.02
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -27,16 +27,9 @@ SYNOPSIS
 DESCRIPTION
     This module can be used to write to file, usually for logging, that can
     rotate itself. File will be opened in append mode. Locking will be done
-    (but can be disabled) to avoid conflict when there are multiple writers.
-    Rotation can be done by size (after a certain size is reached), by time
+    to avoid conflict when there are multiple writers. Rotation can be done
+    by size (after a certain size is reached), by time
     (daily/monthly/yearly), or both.
-
-    This code for this module is based on Log::Dispatch::FileRotate. For the
-    purpose of reducing startup overhead and dependencies, I simplify and
-    strip a few things including: Log::Dispatch-specific stuffs, the use of
-    Date::Manip, and some features that I do not need like date pattern. The
-    result is a module that is less flexible, but it fits all my current
-    needs.
 
     I first wrote this module for logging script STDERR output to files (see
     Tie::Handle::FileRotate).
@@ -112,29 +105,36 @@ METHODS
         history, 1 means to only keep .1 file, and so on.
 
   $fwr->write(@args)
-    Write to file. Will automatically rotate if period changes or file size
-    exceeds specified limit. When rotating, will only keep a specified
+    Write to file. Will automatically rotate file if period changes or file
+    size exceeds specified limit. When rotating, will only keep a specified
     number of histories and delete the older ones. Uses locking, so multiple
     writers do not clobber one another. Lock file is named "<prefix>"".lck".
+    Will wait for up to 1 minute to acquire lock, will die if failed to
+    acquire lock.
+
+    Does not append newline so you'll have to do it yourself.
 
   $fwr->compress
     Compress old rotated files. Currently uses pigz or gzip program to do
     the compression. Extension given to compressed file is ".gz".
 
-    Will not lock files, but will create "<prefix>""-compress.pid" PID file
-    to prevent multiple compression processes running and to signal to
-    writer to postpone rotation.
+    Normally, should be done using a separate process so as to avoid
+    blocking the writers.
 
-    After compression is finished, will remove the PID file.
+    Will not lock writers, but will create "<prefix>""-compress.pid" PID
+    file to prevent multiple compression processes running and to signal the
+    writers to postpone rotation.
+
+    After compression is finished, will remove the PID file, so rotation can
+    be done again on the next "write()" if necessary.
 
 SEE ALSO
-    Log::Dispatch::FileRotate, from which the code of this module is based
-    on. Differences between File::Write::Rotate (FWR) and
-    Log::Dispatch::FileRotate (LDFR) are as follows. Firstly, FWR is not
-    part of Log::Dispatch family. FWR does not use Date::Manip (to be
-    tinier) and does not support DatePattern; instead, FWR replaces it with
-    a simple daily/monthly/yearly period. FWR supports compressing and
-    rotating compressed old files.
+    Log::Dispatch::FileRotate, which inspires this module. Differences
+    between File::Write::Rotate (FWR) and Log::Dispatch::FileRotate (LDFR)
+    are as follows. Firstly, FWR is not part of the Log::Dispatch family.
+    FWR does not use Date::Manip (to be tinier) and does not support
+    DatePattern; instead, FWR replaces it with a simple daily/monthly/yearly
+    period. FWR supports compressing and rotating compressed old files.
 
     Tie::Handle::FileRotate, which uses this module.
 
