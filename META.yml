@@ -1,0 +1,28 @@
+---
+abstract: 'Write to files that archive/rotate themselves'
+author:
+  - 'Steven Haryanto <stevenharyanto@gmail.com>'
+build_requires:
+  File::Slurp: 0
+  File::chdir: 0
+  Module::Build: 0.3601
+  Monkey::Patch::Action: 0
+  Test::More: 0.98
+configure_requires:
+  Module::Build: 0.3601
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300006, CPAN::Meta::Converter version 2.113640'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: File-Write-Rotate
+requires:
+  File::Which: 0
+  Log::Any: 0
+  Proc::PID::File: 0
+  perl: 5.010001
+resources:
+  homepage: http://metacpan.org/dist/File-Write-Rotate
+  repository: http://github.com/sharyanto/perl-File-Write-Rotate
+version: 0.01

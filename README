@@ -1,0 +1,149 @@
+NAME
+    File::Write::Rotate - Write to files that archive/rotate themselves
+
+VERSION
+    version 0.01
+
+SYNOPSIS
+     use File::Write::Rotate;
+
+     my $fwr = File::Write::Rotate->new(
+         dir       => '/var/log',    # required
+         prefix    => 'myapp',       # required
+         #suffix   => '.log',        # default is ''
+         size      => 25*1024*1024,  # default is 10MB, unless period is set
+         histories => 12,            # default is 10
+     );
+
+     # write, will write to /var/log/myapp.log, automatically rotate old log files
+     # to myapp.log.1 when myapp.log reaches 25MB. will keep old log files up to
+     # myapp.log.12.
+     $fwr->write("This is a line\n");
+     $fwr->write("This is", " another line\n");
+
+     # compress old log files
+     $fwr->compress;
+
+DESCRIPTION
+    This module can be used to write to file, usually for logging, that can
+    rotate itself. File will be opened in append mode. Locking will be done
+    (but can be disabled) to avoid conflict when there are multiple writers.
+    Rotation can be done by size (after a certain size is reached), by time
+    (daily/monthly/yearly), or both.
+
+    This code for this module is based on Log::Dispatch::FileRotate. For the
+    purpose of reducing startup overhead and dependencies, I simplify and
+    strip a few things including: Log::Dispatch-specific stuffs, the use of
+    Date::Manip, and some features that I do not need like date pattern. The
+    result is a module that is less flexible, but it fits all my current
+    needs.
+
+    I first wrote this module for logging script STDERR output to files (see
+    Tie::Handle::FileRotate).
+
+ATTRIBUTES
+METHODS
+  $obj = File::Write::Rotate->new(%args)
+    Create new object. Known arguments:
+
+    *   dir => STR (required)
+
+        Directory to put the files in.
+
+    *   prefix => STR (required)
+
+        Name of files. The files will be named like the following:
+
+         <prefix><period><suffix><rotate_suffix>
+
+        "<period>" will only be given if the "period" argument is set. If
+        "period" is set to "yearly", "<period>" will be "YYYY" (4-digit
+        year). If "period" is "monthly", "<period>" will be "YYYY-MM"
+        (4-digit year and 2-digit month). If "period" is "daily", "<period>"
+        will be "YYYY-MM-DD" (4-digit year, 2-digit month, and 2-digit day).
+
+        "<rotate_suffix>" is either empty string for current file; or .1, .2
+        and so on for rotated files. .1 is the most recent rotated file, .2
+        is the next most recent, and so on.
+
+        An example, with "prefix" set to "myapp":
+
+         myapp         # current file
+         myapp.1       # most recently rotated
+         myapp.2       # the next most recently rotated
+
+        With "prefix" set to "myapp", "period" set to "monthly", "suffix"
+        set to ".log":
+
+         myapp.2012-12.log     # file name for december 2012
+         myapp.2013-01.log     # file name for january 2013
+
+        Like previous, but additionally with "size" also set (which will
+        also rotate each period file if it exceeds specified size):
+
+         myapp.2012-12.log     # file(s) for december 2012
+         myapp.2012-12.log.1
+         myapp.2012-12.log.2
+         myapp.2013-01.log     # file(s) for january 2013
+
+        All times will use local time, so you probably want to set "TZ"
+        environment variable or equivalent methods to set time zone.
+
+    *   suffix => STR (default: '')
+
+        Suffix to give to file names, usually file extension like ".log".
+        See "prefix" for more details.
+
+        If you use a yearly period, setting suffix is advised to avoid
+        ambiguity with rotate suffix (for example, is "myapp.2012" the
+        current file for year 2012 or file with 2012 rotate suffix?)
+
+    *   size => INT (default: 10*1024*1024)
+
+        Maximum file size, in bytes, before rotation is triggered. The
+        default is 10MB (10*1024*1024) *if* "period" is not set. If "period"
+        is set, no default for "size" is provided, which means files will
+        not be rotated for size (only for period).
+
+    *   histories => INT (default: 10)
+
+        Number of rotated files to keep. After the number of files exceeds
+        this, the oldest one will be deleted. 0 means not to keep any
+        history, 1 means to only keep .1 file, and so on.
+
+  $fwr->write(@args)
+    Write to file. Will automatically rotate if period changes or file size
+    exceeds specified limit. When rotating, will only keep a specified
+    number of histories and delete the older ones. Uses locking, so multiple
+    writers do not clobber one another. Lock file is named "<prefix>"".lck".
+
+  $fwr->compress
+    Compress old rotated files. Currently uses pigz or gzip program to do
+    the compression. Extension given to compressed file is ".gz".
+
+    Will not lock files, but will create "<prefix>""-compress.pid" PID file
+    to prevent multiple compression processes running and to signal to
+    writer to postpone rotation.
+
+    After compression is finished, will remove the PID file.
+
+SEE ALSO
+    Log::Dispatch::FileRotate, from which the code of this module is based
+    on. Differences between File::Write::Rotate (FWR) and
+    Log::Dispatch::FileRotate (LDFR) are as follows. Firstly, FWR is not
+    part of Log::Dispatch family. FWR does not use Date::Manip (to be
+    tinier) and does not support DatePattern; instead, FWR replaces it with
+    a simple daily/monthly/yearly period. FWR supports compressing and
+    rotating compressed old files.
+
+    Tie::Handle::FileRotate, which uses this module.
+
+AUTHOR
+    Steven Haryanto <stevenharyanto@gmail.com>
+
+COPYRIGHT AND LICENSE
+    This software is copyright (c) 2012 by Steven Haryanto.
+
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
+
