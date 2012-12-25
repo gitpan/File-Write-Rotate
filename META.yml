@@ -21,8 +21,9 @@ requires:
   File::Which: 0
   Log::Any: 0
   Proc::PID::File: 0
+  SHARYANTO::File::Flock: 0.31
   perl: 5.010001
 resources:
   homepage: http://metacpan.org/dist/File-Write-Rotate
   repository: http://github.com/sharyanto/perl-File-Write-Rotate
-version: 0.02
+version: 0.03
