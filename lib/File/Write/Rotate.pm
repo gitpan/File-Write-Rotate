@@ -7,7 +7,7 @@ use Log::Any '$log';
 
 use Time::HiRes 'time';
 
-our $VERSION = '0.03'; # VERSION
+our $VERSION = '0.04'; # VERSION
 
 sub new {
     my $class = shift;
@@ -92,7 +92,7 @@ sub _lock {
 sub _unlock {
     my ($self) = @_;
 
-    $self->{_lock}->_unlock;
+    $self->{_lock}->_unlock if $self->{_lock};
 }
 
 # will return \@files. each entry is [filename without compress suffix,
@@ -304,7 +304,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 SYNOPSIS
 
