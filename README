@@ -2,7 +2,7 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    version 0.04
+    version 0.05
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -97,6 +97,12 @@ METHODS
         default is 10MB (10*1024*1024) *if* "period" is not set. If "period"
         is set, no default for "size" is provided, which means files will
         not be rotated for size (only for period).
+
+    *   period => STR
+
+        Can be set to either "daily", "monthly", or "yearly". If set, will
+        automatically rotate after period change. See "prefix" for more
+        details.
 
     *   histories => INT (default: 10)
 

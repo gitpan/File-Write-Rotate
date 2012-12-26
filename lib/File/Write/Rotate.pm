@@ -7,7 +7,7 @@ use Log::Any '$log';
 
 use Time::HiRes 'time';
 
-our $VERSION = '0.04'; # VERSION
+our $VERSION = '0.05'; # VERSION
 
 sub new {
     my $class = shift;
@@ -304,7 +304,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 SYNOPSIS
 
@@ -407,6 +407,11 @@ Maximum file size, in bytes, before rotation is triggered. The default is 10MB
 (10*1024*1024) I<if> C<period> is not set. If C<period> is set, no default for
 C<size> is provided, which means files will not be rotated for size (only for
 period).
+
+=item * period => STR
+
+Can be set to either C<daily>, C<monthly>, or C<yearly>. If set, will
+automatically rotate after period change. See C<prefix> for more details.
 
 =item * histories => INT (default: 10)
 
