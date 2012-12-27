@@ -7,7 +7,7 @@ use Log::Any '$log';
 
 use Time::HiRes 'time';
 
-our $VERSION = '0.05'; # VERSION
+our $VERSION = '0.06'; # VERSION
 
 sub new {
     my $class = shift;
@@ -30,7 +30,8 @@ sub new {
 
     $args{histories} //= 10;
 
-    bless \%args, $class;
+    my $self = bless \%args, $class;
+    $self;
 }
 
 # file path, without the rotate suffix
@@ -223,6 +224,7 @@ sub _rotate_and_open {
     # (re)open
     if ($do_open || $do_rotate) {
         open $self->{_fh}, ">>", $fp or die "Can't open '$fp': $!";
+        my $oldfh = select $self->{_fh}; $| = 1; select $oldfh; # set autoflush
         $self->{_fp} = $fp;
     }
 }
@@ -304,7 +306,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 SYNOPSIS
 
