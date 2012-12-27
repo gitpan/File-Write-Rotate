@@ -3,11 +3,12 @@ package File::Write::Rotate;
 use 5.010;
 use strict;
 use warnings;
-use Log::Any '$log';
+# we must not use Log::Any, looping if we are used as log output
+#use Log::Any '$log';
 
 use Time::HiRes 'time';
 
-our $VERSION = '0.06'; # VERSION
+our $VERSION = '0.07'; # VERSION
 
 sub new {
     my $class = shift;
@@ -145,7 +146,7 @@ sub _rotate {
         my ($orig, $rs, $period, $cs) = @$f;
         $i++;
         if ($i <= @$files-$self->{histories}) {
-            $log->trace("Deleting old rotated file $dir/$orig$cs ...");
+            #$log->trace("Deleting old rotated file $dir/$orig$cs ...");
             unlink "$dir/$orig$cs" or warn "Can't delete $dir/$orig$cs: $!";
             next;
         }
@@ -156,8 +157,8 @@ sub _rotate {
             $new .= ".1";
         }
         if ($new ne $orig) {
-            $log->trace(
-                "Renaming rotated file $dir/$orig$cs -> $dir/$new$cs ...");
+            #$log->trace(
+            #    "Renaming rotated file $dir/$orig$cs -> $dir/$new$cs ...");
             rename "$dir/$orig$cs", "$dir/$new$cs"
                 or warn "Can't rename '$dir/$orig$cs' -> '$dir/$new$cs': $!";
         }
@@ -306,7 +307,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.06
+version 0.07
 
 =head1 SYNOPSIS
 

@@ -21,14 +21,13 @@ my %module_build_args = (
     "Steven Haryanto <stevenharyanto\@gmail.com>"
   ],
   "dist_name" => "File-Write-Rotate",
-  "dist_version" => "0.06",
+  "dist_version" => "0.07",
   "license" => "perl",
   "module_name" => "File::Write::Rotate",
   "recommends" => {},
   "recursive_test_files" => 1,
   "requires" => {
     "File::Which" => 0,
-    "Log::Any" => 0,
     "Proc::PID::File" => 0,
     "SHARYANTO::File::Flock" => "0.31",
     "perl" => "5.010001"
