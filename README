@@ -2,7 +2,7 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    version 0.09
+    version 0.10
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -35,6 +35,22 @@ DESCRIPTION
     Tie::Handle::FileRotate).
 
 ATTRIBUTES
+  buffer_size => INT
+    Get or set buffer size. If set to a value larger than 0, then when a
+    write() failed, instead of dying, the message will be stored in an
+    internal buffer first. When the number of buffer exceeds this size, then
+    write() will die upon failure. Otherwise, every write() will try to
+    flush the buffer.
+
+    Can be used for example when a program runs as superuser/root then
+    temporarily drops privilege to a normal user. During this period,
+    logging can fail because the program cannot lock the lock file or write
+    to the logging directory. Before dropping privilege, the program can set
+    buffer_size to some larger-than-zero value to hold the messages emitted
+    during dropping privilege. The next write() as the superuser/root will
+    succeed and flush the buffer to disk (provided there is no other error
+    condition, of course).
+
 METHODS
   $obj = File::Write::Rotate->new(%args)
     Create new object. Known arguments:
@@ -109,6 +125,11 @@ METHODS
         Number of rotated files to keep. After the number of files exceeds
         this, the oldest one will be deleted. 0 means not to keep any
         history, 1 means to only keep .1 file, and so on.
+
+    *   buffer_size => INT (default: 0)
+
+        Set initial value of buffer. See the "buffer_size" attribute for
+        more information.
 
   $fwr->write(@args)
     Write to file. Will automatically rotate file if period changes or file

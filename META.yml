@@ -7,6 +7,7 @@ build_requires:
   File::chdir: 0
   Module::Build: 0.3601
   Monkey::Patch::Action: 0
+  Test::Exception: 0.31
   Test::More: 0.98
   tainting: 0.01
 configure_requires:
@@ -27,4 +28,4 @@ requires:
 resources:
   homepage: http://metacpan.org/dist/File-Write-Rotate
   repository: http://github.com/sharyanto/perl-File-Write-Rotate
-version: 0.09
+version: 0.10

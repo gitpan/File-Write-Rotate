@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.09'; # VERSION
+our $VERSION = '0.10'; # VERSION
 our $Debug;
 
 sub new {
@@ -33,8 +33,21 @@ sub new {
 
     $args{histories} //= 10;
 
+    $args{_buffer} = [];
+
     my $self = bless \%args, $class;
     $self;
+}
+
+sub buffer_size {
+    my $self = shift;
+    if (@_) {
+        my $old = $self->{buffer_size};
+        $self->{buffer_size} = $_[0];
+        return $old;
+    } else {
+        return $self->{buffer_size};
+    }
 }
 
 # file path, without the rotate suffix
@@ -147,10 +160,15 @@ sub _rotate {
     for my $f (@$files) {
         my ($orig, $rs, $period, $cs) = @$f;
         $i++;
+
         #say "D: is_tainted \$dir? ".is_tainted($dir);
         #say "D: is_tainted \$orig? ".is_tainted($orig);
         #say "D: is_tainted \$cs? ".is_tainted($cs);
+
+        # TODO actually, it's more proper to taint near the source (in this
+        # case, _get_files)
         untaint \$orig;
+
         if ($i <= @$files-$self->{histories}) {
             say "D: Deleting old rotated file $dir/$orig$cs ..." if $Debug;
             unlink "$dir/$orig$cs" or warn "Can't delete $dir/$orig$cs: $!";
@@ -239,11 +257,41 @@ sub _rotate_and_open {
 sub write {
     my $self = shift;
 
-    my $locked = $self->_lock;
-    $self->_rotate_and_open;
-    my $fh = $self->{_fh};
-    print $fh @_; # print syntax limitation?
-    $self->_unlock if $locked;
+    # the buffering implementation is currently pretty naive. it assume any
+    # die() as a write failure and store the message to buffer.
+
+    # FYI: if privilege is dropped from superuser, the failure is usually at
+    # locking the lock file (permission denied).
+
+    my @msg = (map({@$_} @{$self->{_buffer}}), @_);
+
+    eval {
+        my $locked = $self->_lock;
+
+        $self->_rotate_and_open;
+
+        # for testing only
+        $self->{_hook_before_print}->() if $self->{_hook_before_print};
+
+        # syntax limitation? can't do print $self->{_fh} ... directly
+        my $fh = $self->{_fh};
+        print $fh @msg;
+        $self->{_buffer} = [];
+
+        $self->_unlock if $locked;
+    };
+    my $err = $@;
+
+    if ($err) {
+        if (($self->{buffer_size} // 0) > @{$self->{_buffer}}) {
+            # put message to buffer temporarily
+            push @{$self->{_buffer}}, [@_];
+        } else {
+            # buffer is already full, let's dump the buffered + current message
+            # to the die message anyway.
+            die "Can't log: $err, log message(s)=".join("", @msg);
+        }
+    }
 }
 
 sub compress {
@@ -313,7 +361,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.09
+version 0.10
 
 =head1 SYNOPSIS
 
@@ -349,6 +397,21 @@ L<Tie::Handle::FileRotate>).
 =for Pod::Coverage ^(file_path|lock_file_path|DESTROY)$
 
 =head1 ATTRIBUTES
+
+=head2 buffer_size => INT
+
+Get or set buffer size. If set to a value larger than 0, then when a write()
+failed, instead of dying, the message will be stored in an internal buffer
+first. When the number of buffer exceeds this size, then write() will die upon
+failure. Otherwise, every write() will try to flush the buffer.
+
+Can be used for example when a program runs as superuser/root then temporarily
+drops privilege to a normal user. During this period, logging can fail because
+the program cannot lock the lock file or write to the logging directory. Before
+dropping privilege, the program can set buffer_size to some larger-than-zero
+value to hold the messages emitted during dropping privilege. The next write()
+as the superuser/root will succeed and flush the buffer to disk (provided there
+is no other error condition, of course).
 
 =head1 METHODS
 
@@ -427,6 +490,11 @@ automatically rotate after period change. See C<prefix> for more details.
 Number of rotated files to keep. After the number of files exceeds this, the
 oldest one will be deleted. 0 means not to keep any history, 1 means to only
 keep C<.1> file, and so on.
+
+=item * buffer_size => INT (default: 0)
+
+Set initial value of buffer. See the C<buffer_size> attribute for more
+information.
 
 =back
 

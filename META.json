@@ -43,6 +43,7 @@
             "File::Slurp" : 0,
             "File::chdir" : 0,
             "Monkey::Patch::Action" : 0,
+            "Test::Exception" : "0.31",
             "Test::More" : "0.98",
             "tainting" : "0.01"
          }
@@ -55,6 +56,6 @@
          "url" : "http://github.com/sharyanto/perl-File-Write-Rotate"
       }
    },
-   "version" : "0.09"
+   "version" : "0.10"
 }
 

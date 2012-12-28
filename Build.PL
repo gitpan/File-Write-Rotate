@@ -11,6 +11,7 @@ my %module_build_args = (
     "File::chdir" => 0,
     "Module::Build" => "0.3601",
     "Monkey::Patch::Action" => 0,
+    "Test::Exception" => "0.31",
     "Test::More" => "0.98",
     "tainting" => "0.01"
   },
@@ -22,7 +23,7 @@ my %module_build_args = (
     "Steven Haryanto <stevenharyanto\@gmail.com>"
   ],
   "dist_name" => "File-Write-Rotate",
-  "dist_version" => "0.09",
+  "dist_version" => "0.10",
   "license" => "perl",
   "module_name" => "File::Write::Rotate",
   "recommends" => {},
