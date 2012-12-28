@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.10'; # VERSION
+our $VERSION = '0.11'; # VERSION
 our $Debug;
 
 sub new {
@@ -289,7 +289,14 @@ sub write {
         } else {
             # buffer is already full, let's dump the buffered + current message
             # to the die message anyway.
-            die "Can't log: $err, log message(s)=".join("", @msg);
+            die join(
+                "",
+                "Can't log",
+                (@{$self->{_buffer}} ? " (buffer is full, ".
+                     scalar(@{$self->{_buffer}})." message(s))" : ""),
+                ": $err, log message(s)=",
+                @msg
+            );
         }
     }
 }
@@ -361,18 +368,19 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.10
+version 0.11
 
 =head1 SYNOPSIS
 
  use File::Write::Rotate;
 
  my $fwr = File::Write::Rotate->new(
-     dir       => '/var/log',    # required
-     prefix    => 'myapp',       # required
-     #suffix   => '.log',        # default is ''
-     size      => 25*1024*1024,  # default is 10MB, unless period is set
-     histories => 12,            # default is 10
+     dir          => '/var/log',    # required
+     prefix       => 'myapp',       # required
+     #suffix      => '.log',        # default is ''
+     size         => 25*1024*1024,  # default is 10MB, unless period is set
+     histories    => 12,            # default is 10
+     #buffer_size => 100,           # default is none
  );
 
  # write, will write to /var/log/myapp.log, automatically rotate old log files

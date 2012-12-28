@@ -28,4 +28,4 @@ requires:
 resources:
   homepage: http://metacpan.org/dist/File-Write-Rotate
   repository: http://github.com/sharyanto/perl-File-Write-Rotate
-version: 0.10
+version: 0.11
