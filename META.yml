@@ -8,6 +8,7 @@ build_requires:
   Module::Build: 0.3601
   Monkey::Patch::Action: 0
   Test::More: 0.98
+  tainting: 0.01
 configure_requires:
   Module::Build: 0.3601
 dynamic_config: 0
@@ -21,8 +22,9 @@ requires:
   File::Which: 0
   Proc::PID::File: 0
   SHARYANTO::File::Flock: 0.31
+  Taint::Runtime: 0.03
   perl: 5.010001
 resources:
   homepage: http://metacpan.org/dist/File-Write-Rotate
   repository: http://github.com/sharyanto/perl-File-Write-Rotate
-version: 0.08
+version: 0.09
