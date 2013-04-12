@@ -54,11 +54,11 @@
    },
    "release_status" : "stable",
    "resources" : {
-      "homepage" : "http://metacpan.org/dist/File-Write-Rotate",
+      "homepage" : "http://metacpan.org/release/File-Write-Rotate",
       "repository" : {
          "url" : "http://github.com/sharyanto/perl-File-Write-Rotate"
       }
    },
-   "version" : "0.12"
+   "version" : "0.13"
 }
 

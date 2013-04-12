@@ -26,6 +26,6 @@ requires:
   Taint::Runtime: 0.03
   perl: 5.010001
 resources:
-  homepage: http://metacpan.org/dist/File-Write-Rotate
+  homepage: http://metacpan.org/release/File-Write-Rotate
   repository: http://github.com/sharyanto/perl-File-Write-Rotate
-version: 0.12
+version: 0.13
