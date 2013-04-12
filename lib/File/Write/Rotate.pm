@@ -1,6 +1,6 @@
 package File::Write::Rotate;
 
-use 5.010;
+use 5.010001;
 use strict;
 use warnings;
 # we must not use Log::Any, looping if we are used as log output
@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.11'; # VERSION
+our $VERSION = '0.12'; # VERSION
 our $Debug;
 
 sub new {
@@ -368,7 +368,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.11
+version 0.12
 
 =head1 SYNOPSIS
 
@@ -400,7 +400,7 @@ conflict when there are multiple writers. Rotation can be done by size (after a
 certain size is reached), by time (daily/monthly/yearly), or both.
 
 I first wrote this module for logging script STDERR output to files (see
-L<Tie::Handle::FileRotate>).
+L<Tie::Handle::FileWriteRotate>).
 
 =for Pod::Coverage ^(file_path|lock_file_path|DESTROY)$
 
@@ -534,13 +534,37 @@ again on the next C<write()> if necessary.
 =head1 SEE ALSO
 
 L<Log::Dispatch::FileRotate>, which inspires this module. Differences between
-File::Write::Rotate (FWR) and Log::Dispatch::FileRotate (LDFR) are as follows.
-Firstly, FWR is not part of the L<Log::Dispatch> family. FWR does not use
-L<Date::Manip> (to be tinier) and does not support DatePattern; instead, FWR
-replaces it with a simple daily/monthly/yearly period. FWR supports compressing
-and rotating compressed old files.
+File::Write::Rotate (FWR) and Log::Dispatch::FileRotate (LDFR) are as follows:
 
-L<Tie::Handle::FileRotate>, which uses this module.
+=over
+
+=item * FWR is not part of the L<Log::Dispatch> family.
+
+This makes FWR more general to use.
+
+For using together with Log::Dispatch/Log4perl, I have also written
+L<Log::Dispatch::FileWriteRotate> which is a direct (although not a perfect
+drop-in) replacement for Log::Dispatch::FileRotate.
+
+=item * Secondly, FWR does not use L<Date::Manip>.
+
+Date::Manip is relatively large (loading Date::Manip 6.37 equals to loading 34
+files and ~ 22k lines; while FWR itself is only < 1k lines!)
+
+As a consequence of this, FWR does not support DatePattern; instead, FWR
+replaces it with a simple daily/monthly/yearly period.
+
+=item * And lastly, FWR supports compressing and rotating compressed old files.
+
+Using separate processes like Unix B<logrotate> utility means having to deal
+with yet another race condition. FWR takes care of that for you (see the
+compress() method). You also have the option to do log compression in the same
+script/process if you want, which is convenient.
+
+=back
+
+L<Tie::Handle::FileWriteRotate> and Log::Dispatch::FileWriteRotate, which use
+this module.
 
 =head1 AUTHOR
 
@@ -548,7 +572,7 @@ Steven Haryanto <stevenharyanto@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2012 by Steven Haryanto.
+This software is copyright (c) 2013 by Steven Haryanto.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
