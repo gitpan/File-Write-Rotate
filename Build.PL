@@ -23,7 +23,7 @@ my %module_build_args = (
     "Steven Haryanto <stevenharyanto\@gmail.com>"
   ],
   "dist_name" => "File-Write-Rotate",
-  "dist_version" => "0.13",
+  "dist_version" => "0.14",
   "license" => "perl",
   "module_name" => "File::Write::Rotate",
   "recommends" => {},
@@ -31,7 +31,7 @@ my %module_build_args = (
   "requires" => {
     "File::Which" => 0,
     "Proc::PID::File" => 0,
-    "SHARYANTO::File::Flock" => "0.31",
+    "SHARYANTO::File::Flock" => "0.49",
     "Taint::Runtime" => "0.03",
     "perl" => "5.010001"
   },
