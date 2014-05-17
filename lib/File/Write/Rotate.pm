@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.14'; # VERSION
+our $VERSION = '0.15'; # VERSION
 our $Debug;
 
 sub new {
@@ -100,8 +100,7 @@ sub _lock {
         return $self->{_lock}->_lock;
     } else {
         require SHARYANTO::File::Flock;
-        $self->{_lock} = SHARYANTO::File::Flock->lock(
-            $self->lock_file_path, {unlink=>1});
+        $self->{_lock} = SHARYANTO::File::Flock->lock($self->lock_file_path);
         return 1;
     }
 }
@@ -358,9 +357,11 @@ sub DESTROY {
 1;
 #ABSTRACT: Write to files that archive/rotate themselves
 
-
 __END__
+
 =pod
+
+=encoding UTF-8
 
 =head1 NAME
 
@@ -368,7 +369,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-version 0.14
+This document describes version 0.15 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-05-17.
 
 =head1 SYNOPSIS
 
@@ -587,16 +588,31 @@ around 3.4mil/s, while using FWR it comes down to around 19.5k/s.
 However, this is not something you'll notice or need to worry about unless
 you're logging near that speed.
 
+=head1 HOMEPAGE
+
+Please visit the project's homepage at L<https://metacpan.org/release/File-Write-Rotate>.
+
+=head1 SOURCE
+
+Source repository is at L<https://github.com/sharyanto/perl-File-Write-Rotate>.
+
+=head1 BUGS
+
+Please report any bugs or feature requests on the bugtracker website L<https://rt.cpan.org/Public/Dist/Display.html?Name=File-Write-Rotate>
+
+When submitting a bug or request, please include a test-file or a
+patch to an existing test-file that illustrates the bug or desired
+feature.
+
 =head1 AUTHOR
 
 Steven Haryanto <stevenharyanto@gmail.com>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2013 by Steven Haryanto.
+This software is copyright (c) 2014 by Steven Haryanto.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
