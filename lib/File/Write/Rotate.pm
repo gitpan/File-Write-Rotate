@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.15'; # VERSION
+our $VERSION = '0.16'; # VERSION
 our $Debug;
 
 sub new {
@@ -195,6 +195,10 @@ sub _open {
 
     my $fp = $self->file_path;
     open $self->{_fh}, ">>", $fp or die "Can't open '$fp': $!";
+    if (defined $self->{binmode}) {
+        binmode $self->{_fh}, $self->{binmode}
+            or die "Can't set PerlIO layer on '$fp': $!";
+    }
     my $oldfh = select $self->{_fh}; $| = 1; select $oldfh; # set autoflush
     $self->{_fp} = $fp;
 }
@@ -369,7 +373,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.15 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-05-17.
+This document describes version 0.16 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-07-10.
 
 =head1 SYNOPSIS
 
@@ -410,9 +414,10 @@ L<Tie::Handle::FileWriteRotate>).
 =head2 buffer_size => INT
 
 Get or set buffer size. If set to a value larger than 0, then when a write()
-failed, instead of dying, the message will be stored in an internal buffer
-first. When the number of buffer exceeds this size, then write() will die upon
-failure. Otherwise, every write() will try to flush the buffer.
+failed, instead of dying, the message will be stored in an internal buffer first
+(a regular Perl array). When the number of items in the buffer exceeds this
+size, then write() will die upon failure. Otherwise, every write() will try to
+flush the buffer.
 
 Can be used for example when a program runs as superuser/root then temporarily
 drops privilege to a normal user. During this period, logging can fail because
