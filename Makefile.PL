@@ -34,10 +34,10 @@ my %WriteMakefileArgs = (
     "Monkey::Patch::Action" => 0,
     "Test::Exception" => "0.31",
     "Test::More" => "0.98",
-    "Test::Warnings" => "0.14",
+    "Test::Warnings" => "0.014",
     "tainting" => "0.01"
   },
-  "VERSION" => "0.16",
+  "VERSION" => "0.17",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -57,7 +57,7 @@ my %FallbackPrereqs = (
   "Taint::Runtime" => "0.03",
   "Test::Exception" => "0.31",
   "Test::More" => "0.98",
-  "Test::Warnings" => "0.14",
+  "Test::Warnings" => "0.014",
   "tainting" => "0.01"
 );
 

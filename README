@@ -2,7 +2,7 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    This document describes version 0.16 of File::Write::Rotate (from Perl
+    This document describes version 0.17 of File::Write::Rotate (from Perl
     distribution File-Write-Rotate), released on 2014-07-10.
 
 SYNOPSIS

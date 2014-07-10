@@ -46,7 +46,7 @@
             "Monkey::Patch::Action" : "0",
             "Test::Exception" : "0.31",
             "Test::More" : "0.98",
-            "Test::Warnings" : "0.14",
+            "Test::Warnings" : "0.014",
             "tainting" : "0.01"
          }
       }
@@ -63,7 +63,7 @@
          "web" : "https://github.com/sharyanto/perl-File-Write-Rotate"
       }
    },
-   "version" : "0.16",
+   "version" : "0.17",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.018002"

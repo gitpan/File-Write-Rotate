@@ -9,7 +9,7 @@ use warnings;
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
 
-our $VERSION = '0.16'; # VERSION
+our $VERSION = '0.17'; # VERSION
 our $Debug;
 
 sub new {
@@ -373,7 +373,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.16 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-07-10.
+This document describes version 0.17 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-07-10.
 
 =head1 SYNOPSIS
 

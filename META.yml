@@ -11,7 +11,7 @@ build_requires:
   Monkey::Patch::Action: '0'
   Test::Exception: '0.31'
   Test::More: '0.98'
-  Test::Warnings: '0.14'
+  Test::Warnings: '0.014'
   tainting: '0.01'
 configure_requires:
   ExtUtils::MakeMaker: '6.30'
@@ -32,7 +32,7 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=File-Write-Rotate
   homepage: https://metacpan.org/release/File-Write-Rotate
   repository: git://github.com/sharyanto/perl-File-Write-Rotate.git
-version: '0.16'
+version: '0.17'
 x_Dist_Zilla:
   perl:
     version: '5.018002'
