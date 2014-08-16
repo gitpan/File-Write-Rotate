@@ -3,32 +3,35 @@ package File::Write::Rotate;
 use 5.010001;
 use strict;
 use warnings;
+
 # we must not use Log::Any, looping if we are used as log output
 #use Log::Any '$log';
 
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
+use IO::Compress::Gzip qw(gzip $GzipError);
+use File::Spec;
 
-our $VERSION = '0.17'; # VERSION
+our $VERSION = '0.18'; # VERSION
 our $Debug;
 
 sub new {
     my $class = shift;
-    my %args = @_;
+    my %args  = @_;
 
-    defined($args{dir})    or die "Please specify dir";
-    defined($args{prefix}) or die "Please specify prefix";
+    defined( $args{dir} )    or die "Please specify dir";
+    defined( $args{prefix} ) or die "Please specify prefix";
     $args{suffix} //= "";
 
     $args{size} //= 0;
 
-    if ($args{period}) {
+    if ( $args{period} ) {
         $args{period} =~ /daily|day|month|year/i
-            or die "Invalid period, please use daily/monthly/yearly";
+          or die "Invalid period, please use daily/monthly/yearly";
     }
 
-    if (!$args{period} && !$args{size}) {
-        $args{size} = 10*1024*1024;
+    if ( !$args{period} && !$args{size} ) {
+        $args{size} = 10 * 1024 * 1024;
     }
 
     $args{histories} //= 10;
@@ -45,7 +48,8 @@ sub buffer_size {
         my $old = $self->{buffer_size};
         $self->{buffer_size} = $_[0];
         return $old;
-    } else {
+    }
+    else {
         return $self->{buffer_size};
     }
 }
@@ -57,50 +61,48 @@ sub file_path {
     # _now is calculated every time we access this method
     $self->{_now} = time();
 
-    my @lt = localtime($self->{_now});
+    my @lt = localtime( $self->{_now} );
     $lt[5] += 1900;
     $lt[4]++;
 
     my $period;
-    if ($self->{period}) {
-        if ($self->{period} =~ /year/i) {
-            $period = sprintf(".%04d", $lt[5]);
-        } elsif ($self->{period} =~ /month/i) {
-            $period = sprintf(".%04d-%02d", $lt[5], $lt[4]);
-        } elsif ($self->{period} =~ /day|daily/i) {
-            $period = sprintf(".%04d-%02d-%02d", $lt[5], $lt[4], $lt[3]);
+    if ( $self->{period} ) {
+        if ( $self->{period} =~ /year/i ) {
+            $period = sprintf( ".%04d", $lt[5] );
         }
-    } else {
+        elsif ( $self->{period} =~ /month/i ) {
+            $period = sprintf( ".%04d-%02d", $lt[5], $lt[4] );
+        }
+        elsif ( $self->{period} =~ /day|daily/i ) {
+            $period = sprintf( ".%04d-%02d-%02d", $lt[5], $lt[4], $lt[3] );
+        }
+    }
+    else {
         $period = "";
     }
 
-    join(
-        '',
-        $self->{dir}, '/',
-        $self->{prefix},
-        $period,
-        $self->{suffix},
-    );
+    my $path = join( '', $self->{dir}, '/', $self->{prefix}, $period, $self->{suffix}, );
+    if (wantarray) {
+        return ($path, $period);
+    } else {
+        return $path;
+    }
 }
 
 sub lock_file_path {
     my ($self) = @_;
-    join(
-        '',
-        $self->{dir}, '/',
-        $self->{prefix},
-        '.lck'
-    );
+    join( '', $self->{dir}, '/', $self->{prefix}, '.lck' );
 }
 
 sub _lock {
     my ($self) = @_;
 
-    if ($self->{_lock}) {
+    if ( $self->{_lock} ) {
         return $self->{_lock}->_lock;
-    } else {
+    }
+    else {
         require SHARYANTO::File::Flock;
-        $self->{_lock} = SHARYANTO::File::Flock->lock($self->lock_file_path);
+        $self->{_lock} = SHARYANTO::File::Flock->lock( $self->lock_file_path );
         return 1;
     }
 }
@@ -117,26 +119,26 @@ sub _unlock {
 sub _get_files {
     my ($self) = @_;
 
-    opendir my($dh), $self->{dir} or do {
+    opendir my ($dh), $self->{dir} or do {
         warn "Can't opendir '$self->{dir}': $!";
         return;
     };
 
     my @files;
-    while (my $e = readdir($dh)) {
-        my $cs = $1 if $e =~ s/(\.gz)\z//;
+    while ( my $e = readdir($dh) ) {
+        my $cs = $1 if $e =~ s/(\.gz)\z//; # compress suffix
         next unless $e =~ /\A\Q$self->{prefix}\E
                            (?:\. (?<period>\d{4}(?:-\d\d(?:-\d\d)?)?) )?
                            \Q$self->{suffix}\E
                            (?:\. (?<rotate_suffix>\d+) )?
                            \z
                           /x;
-        push @files, [$e, $+{rotate_suffix} // 0, $+{period} // "",
-                      $cs // ""];
+        push @files,
+          [ $e, $+{rotate_suffix} // 0, $+{period} // "", $cs // "" ];
     }
     closedir($dh);
 
-    [sort {$b->[1] <=> $a->[1] || $a->[2] cmp $b->[2]} @files];
+    [ sort { $b->[1] <=> $a->[1] || $a->[2] cmp $b->[2] } @files ];
 }
 
 # rename (increase rotation suffix) and keep only n histories. note: failure in
@@ -145,11 +147,11 @@ sub _rotate {
     my ($self) = @_;
 
     my $locked = $self->_lock;
-    my $files  = $self->_get_files or goto EXIT;
+    my $files = $self->_get_files or goto EXIT;
 
     # is there a compression process in progress? this is marked by the
     # existence of <prefix>-compress.pid PID file.
-    if (-f "$self->{dir}/$self->{prefix}-compress.pid") {
+    if ( -f "$self->{dir}/$self->{prefix}-compress.pid" ) {
         warn "Compression is in progress, rotation is postponed";
         goto EXIT;
     }
@@ -157,32 +159,34 @@ sub _rotate {
     my $i;
     my $dir = $self->{dir};
     for my $f (@$files) {
-        my ($orig, $rs, $period, $cs) = @$f;
+        my ( $orig, $rs, $period, $cs ) = @$f;
         $i++;
 
-        #say "D: is_tainted \$dir? ".is_tainted($dir);
-        #say "D: is_tainted \$orig? ".is_tainted($orig);
-        #say "D: is_tainted \$cs? ".is_tainted($cs);
+        #say "DEBUG: is_tainted \$dir? ".is_tainted($dir);
+        #say "DEBUG: is_tainted \$orig? ".is_tainted($orig);
+        #say "DEBUG: is_tainted \$cs? ".is_tainted($cs);
 
         # TODO actually, it's more proper to taint near the source (in this
         # case, _get_files)
         untaint \$orig;
 
-        if ($i <= @$files-$self->{histories}) {
-            say "D: Deleting old rotated file $dir/$orig$cs ..." if $Debug;
+        if ( $i <= @$files - $self->{histories} ) {
+            say "DEBUG: Deleting old rotated file $dir/$orig$cs ..." if $Debug;
             unlink "$dir/$orig$cs" or warn "Can't delete $dir/$orig$cs: $!";
             next;
         }
         my $new = $orig;
         if ($rs) {
             $new =~ s/\.(\d+)\z/"." . ($1+1)/e;
-        } elsif (!$period || delete($self->{_tmp_hack_give_suffix_to_fp})) {
+        }
+        elsif ( !$period || delete( $self->{_tmp_hack_give_suffix_to_fp} ) ) {
             $new .= ".1";
         }
-        if ($new ne $orig) {
-            say "D: Renaming rotated file $dir/$orig$cs -> $dir/$new$cs ..." if $Debug;
+        if ( $new ne $orig ) {
+            say "DEBUG: Renaming rotated file $dir/$orig$cs -> $dir/$new$cs ..."
+              if $Debug;
             rename "$dir/$orig$cs", "$dir/$new$cs"
-                or warn "Can't rename '$dir/$orig$cs' -> '$dir/$new$cs': $!";
+              or warn "Can't rename '$dir/$orig$cs' -> '$dir/$new$cs': $!";
         }
     }
 
@@ -193,68 +197,84 @@ sub _rotate {
 sub _open {
     my $self = shift;
 
-    my $fp = $self->file_path;
+    my ($fp, $period) = $self->file_path;
     open $self->{_fh}, ">>", $fp or die "Can't open '$fp': $!";
-    if (defined $self->{binmode}) {
+    if ( defined $self->{binmode} ) {
         binmode $self->{_fh}, $self->{binmode}
-            or die "Can't set PerlIO layer on '$fp': $!";
+          or die "Can't set PerlIO layer on '$fp': $!";
     }
-    my $oldfh = select $self->{_fh}; $| = 1; select $oldfh; # set autoflush
+    my $oldfh = select $self->{_fh};
+    $| = 1;
+    select $oldfh;    # set autoflush
     $self->{_fp} = $fp;
+    $self->{_cur_period} = $period;
 }
 
 # (re)open file and optionally rotate if necessary
 sub _rotate_and_open {
-    my ($self) = @_;
 
+    my $self = shift;
+    my ( $do_open, $do_rotate ) = @_;
     my $fp = $self->file_path;
-    my ($do_open, $do_rotate) = @_;
 
-    # stat the current file (not our handle _fp)
-    my @st = stat($fp);
-    # file does not exist yet, create
-    unless (-e _) {
-        $do_open++;
-        goto DOIT;
-    }
-    die "Can't stat '$fp': $!" unless @st;
-    my $finode = $st[1];
+  CASE: {
 
-    # file is not opened yet, open
-    unless ($self->{_fh}) {
-        $self->_open;
-    }
-
-    # period has changed, rotate
-    if ($self->{_fp} ne $fp) {
-        $do_rotate++;
-        goto DOIT;
-    }
-
-    # check whether size has been exceeded
-    my $inode;
-    if ($self->{size} > 0) {
-        @st       = stat($self->{_fh});
-        my $size  = $st[7];
-        $inode    = $st[1];
-        if ($size >= $self->{size}) {
-            say "D: Size of $self->{_fp} is $size, exceeds $self->{size}, rotating ..." if $Debug;
-            $do_rotate++;
-            $self->{_tmp_hack_give_suffix_to_fp} = 1;
-            goto DOIT;
+        unless ( -e $fp ) {
+            $do_open++;
+            last CASE;
         }
+
+        # file is not opened yet, open
+        unless ( $self->{_fh} ) {
+            $self->_open;
+        }
+
+        # period has changed, rotate
+        if ( $self->{_fp} ne $fp ) {
+            $do_rotate++;
+            last CASE;
+        }
+
+        # check whether size has been exceeded
+        my $inode;
+
+        if ( $self->{size} > 0 ) {
+
+            my @st   = stat( $self->{_fh} );
+            my $size = $st[7];
+            $inode = $st[1];
+
+            if ( $size >= $self->{size} ) {
+                say "DEBUG: Size of $self->{_fp} is $size, exceeds $self->{size}, rotating ..."
+                    if $Debug;
+                $do_rotate++;
+                $self->{_tmp_hack_give_suffix_to_fp} = 1;
+                last CASE;
+            }
+            else {
+
+                # stat the current file (not our handle _fp)
+                my @st = stat($fp);
+                die "Can't stat '$fp': $!" unless @st;
+                my $finode = $st[1];
+
+       # check whether other process has rename/rotate under us (for example,
+       # 'prefix' has been moved to 'prefix.1'), in which case we need to reopen
+                if ( ( defined($inode) ) and ( $finode != $inode ) ) {
+
+                    $do_open++;
+
+                }
+
+            }
+
+        }
+
     }
 
-    # check whether other process has rename/rotate under us (for example,
-    # 'prefix' has been moved to 'prefix.1'), in which case we need to reopen
-    if ($inode && $finode != $inode) {
-        $do_open++;
-        goto DOIT;
-    }
-
-  DOIT:
     $self->_rotate if $do_rotate;
-    $self->_open   if $do_rotate || $do_open; # (re)open
+    $self->_open if $do_rotate || $do_open;    # (re)open
+
 }
 
 sub write {
@@ -266,7 +286,7 @@ sub write {
     # FYI: if privilege is dropped from superuser, the failure is usually at
     # locking the lock file (permission denied).
 
-    my @msg = (map({@$_} @{$self->{_buffer}}), @_);
+    my @msg = ( map( {@$_} @{ $self->{_buffer} } ), @_ );
 
     eval {
         my $locked = $self->_lock;
@@ -286,17 +306,24 @@ sub write {
     my $err = $@;
 
     if ($err) {
-        if (($self->{buffer_size} // 0) > @{$self->{_buffer}}) {
+        if ( ( $self->{buffer_size} // 0 ) > @{ $self->{_buffer} } ) {
+
             # put message to buffer temporarily
-            push @{$self->{_buffer}}, [@_];
-        } else {
+            push @{ $self->{_buffer} }, [@_];
+        }
+        else {
             # buffer is already full, let's dump the buffered + current message
             # to the die message anyway.
             die join(
                 "",
                 "Can't log",
-                (@{$self->{_buffer}} ? " (buffer is full, ".
-                     scalar(@{$self->{_buffer}})." message(s))" : ""),
+                (
+                    @{ $self->{_buffer} }
+                    ? " (buffer is full, "
+                      . scalar( @{ $self->{_buffer} } )
+                      . " message(s))"
+                    : ""
+                ),
                 ": $err, log message(s)=",
                 @msg
             );
@@ -305,49 +332,49 @@ sub write {
 }
 
 sub compress {
-    require File::Which;
+    my ($self) = shift;
+
     require Proc::PID::File;
 
-    my ($self) = @_;
+    my $locked           = $self->_lock;
+    my $files_ref        = $self->_get_files;
+    my $done_compression = 0;
 
-    my $cmd;
-    for (qw/pigz gzip/) {
-        if (File::Which::which($_)) {
-            $cmd = $_; last;
+    if ( @{$files_ref} ) {
+        my $pid = Proc::PID::File->new(
+            dir    => $self->{dir},
+            name   => "$self->{prefix}-compress",
+            verify => 1,
+        );
+
+        if ( $pid->alive ) {
+            warn "Another compression is in progress";
+        } else {
+            my @tocompress;
+            #use DD; dd $self;
+            for my $file_ref ( @{$files_ref} ) {
+                my ($orig, $rs, $period, $cs) = @{ $file_ref };
+                #say "D:compress: orig=<$orig> rs=<$rs> period=<$period> cs=<$cs>";
+                next if $cs; # already compressed
+                next if !$self->{period} && !$rs; # not old log
+                next if  $self->{period} && $period eq $self->{_cur_period}; # not old log
+                push @tocompress, $orig;
+            }
+
+            if (@tocompress) {
+                my $dir = $self->{dir};
+                foreach my $file (@tocompress) {
+                    gzip( $file => File::Spec->catfile( $dir, "$file.gz" ) )
+                        or warn "gzip failed: $GzipError\n";
+                }
+                $done_compression = 1;
+            }
         }
     }
-    if (!$cmd) {
-        warn "No compressor program available, compress aborted";
-        return;
-    }
 
-    my $locked = $self->_lock;
-    my $files  = $self->_get_files or goto EXIT1;
-
-    my $pid = Proc::PID::File->new(
-        dir    => $self->{dir},
-        name   => "$self->{prefix}-compress",
-        verify => 1,
-    );
-    if ($pid->alive) {
-        warn "Another compression is in progress";
-        goto EXIT1;
-    }
-
-    my @tocompress;
-    my $dir = $self->{dir};
-    for my $f (@$files) {
-        my ($orig, $rs, $period, $cs) = @$f;
-        next unless $rs;
-        next if $cs;
-        push @tocompress, $orig;
-    }
-
-  EXIT1:
     $self->_unlock if $locked;
-    if (@tocompress) {
-        system $cmd, "--force", (map {"$self->{dir}/$_"} @tocompress);
-    }
+    return $done_compression;
+
 }
 
 sub DESTROY {
@@ -359,6 +386,7 @@ sub DESTROY {
 }
 
 1;
+
 #ABSTRACT: Write to files that archive/rotate themselves
 
 __END__
@@ -373,7 +401,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.17 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-07-10.
+This document describes version 0.18 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-08-16.
 
 =head1 SYNOPSIS
 
@@ -524,11 +552,8 @@ Does not append newline so you'll have to do it yourself.
 
 =head2 $fwr->compress
 
-Compress old rotated files. Currently uses B<pigz> or B<gzip> program to do the
+Compress old rotated files. Currently uses L<IO::Compress::Gzip> to do the
 compression. Extension given to compressed file is C<.gz>.
-
-Normally, should be done using a separate process so as to avoid blocking the
-writers.
 
 Will not lock writers, but will create C<< <prefix> >>C<-compress.pid> PID file
 to prevent multiple compression processes running and to signal the writers to
@@ -536,6 +561,28 @@ postpone rotation.
 
 After compression is finished, will remove the PID file, so rotation can be done
 again on the next C<write()> if necessary.
+
+=head1 FAQ
+
+=head2 Why use autorotating log?
+
+Mainly convenience and low maintenance. You no longer need a separate rotator
+like the Unix B<logrotate> utility (which when accidentally disabled or
+misconfigured will cause your logs to stop being rotated and grow indefinitely).
+
+=head2 What is the downside of using FWR (and LDFR)?
+
+Mainly performance overhead, as every write() involves locking to make it safe
+to use with multiple processes. Tested on my Core i5 3.1 GHz desktop, writing
+log lines in the size of ~ 200 bytes, raw writing to disk (SSD) has the speed of
+around 3.4mil/s, while using FWR it comes down to around 19.5k/s.
+
+However, this is not something you'll notice or need to worry about unless
+you're logging near that speed.
+
+=head1 TODO
+
+Perhaps an option to disable locking.
 
 =head1 SEE ALSO
 
@@ -574,24 +621,6 @@ slightly faster than LDFR on my testing).
 
 L<Tie::Handle::FileWriteRotate> and Log::Dispatch::FileWriteRotate, which use
 this module.
-
-=head1 FAQ
-
-=head2 Why use autorotating log?
-
-Mainly convenience and low maintenance. You no longer need a separate rotator
-like the Unix B<logrotate> utility (which when accidentally disabled or
-misconfigured will cause your logs to stop being rotated and grow indefinitely).
-
-=head2 What is the downside of using FWR (and LDFR)?
-
-Mainly performance overhead, as every write() involves locking to make it safe
-to use with multiple processes. Tested on my Core i5 3.1 GHz desktop, writing
-log lines in the size of ~ 200 bytes, raw writing to disk (SSD) has the speed of
-around 3.4mil/s, while using FWR it comes down to around 19.5k/s.
-
-However, this is not something you'll notice or need to worry about unless
-you're logging near that speed.
 
 =head1 HOMEPAGE
 
