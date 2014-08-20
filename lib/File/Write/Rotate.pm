@@ -12,7 +12,7 @@ use Time::HiRes 'time';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use File::Spec;
 
-our $VERSION = '0.18'; # VERSION
+our $VERSION = '0.19'; # VERSION
 our $Debug;
 
 sub new {
@@ -68,20 +68,26 @@ sub file_path {
     my $period;
     if ( $self->{period} ) {
         if ( $self->{period} =~ /year/i ) {
-            $period = sprintf( ".%04d", $lt[5] );
+            $period = sprintf( "%04d", $lt[5] );
         }
         elsif ( $self->{period} =~ /month/i ) {
-            $period = sprintf( ".%04d-%02d", $lt[5], $lt[4] );
+            $period = sprintf( "%04d-%02d", $lt[5], $lt[4] );
         }
         elsif ( $self->{period} =~ /day|daily/i ) {
-            $period = sprintf( ".%04d-%02d-%02d", $lt[5], $lt[4], $lt[3] );
+            $period = sprintf( "%04d-%02d-%02d", $lt[5], $lt[4], $lt[3] );
         }
     }
     else {
         $period = "";
     }
 
-    my $path = join( '', $self->{dir}, '/', $self->{prefix}, $period, $self->{suffix}, );
+    my $path = join(
+        '',
+        $self->{dir}, '/',
+        $self->{prefix},
+        length($period) ? ".$period" : "",
+        $self->{suffix},
+    );
     if (wantarray) {
         return ($path, $period);
     } else {
@@ -401,7 +407,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.18 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-08-16.
+This document describes version 0.19 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-08-20.
 
 =head1 SYNOPSIS
 
