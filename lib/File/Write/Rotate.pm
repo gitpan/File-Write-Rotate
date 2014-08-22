@@ -12,7 +12,7 @@ use Time::HiRes 'time';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use File::Spec;
 
-our $VERSION = '0.19'; # VERSION
+our $VERSION = '0.20'; # VERSION
 our $Debug;
 
 sub new {
@@ -407,7 +407,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.19 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-08-20.
+This document describes version 0.20 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-08-22.
 
 =head1 SYNOPSIS
 

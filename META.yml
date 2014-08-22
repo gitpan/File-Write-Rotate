@@ -31,7 +31,7 @@ resources:
   bugtracker: https://rt.cpan.org/Public/Dist/Display.html?Name=File-Write-Rotate
   homepage: https://metacpan.org/release/File-Write-Rotate
   repository: git://github.com/sharyanto/perl-File-Write-Rotate.git
-version: '0.19'
+version: '0.20'
 x_Dist_Zilla:
   perl:
     version: '5.018002'
