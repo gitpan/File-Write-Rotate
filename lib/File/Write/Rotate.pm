@@ -12,7 +12,7 @@ use Time::HiRes 'time';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use File::Spec;
 
-our $VERSION = '0.21'; # VERSION
+our $VERSION = '0.22'; # VERSION
 our $Debug;
 
 sub new {
@@ -442,7 +442,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.21 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-09-01.
+This document describes version 0.22 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-09-01.
 
 =head1 SYNOPSIS
 
@@ -502,8 +502,9 @@ Current file's path.
 
 =head2 handle => (ro)
 
-Current file handle. You should not use this directly under special
-circumstances (e.g. in hooks).
+Current file handle. You should not use this directly, but use write() instead.
+This attribute is provided for special circumstances (e.g. in hooks, see example
+in the hook section).
 
 =head2 hook_before_write => code
 
@@ -521,7 +522,8 @@ This can be used to write a footer to the end of each file, e.g.:
 
  # hook_before_rotate
  my ($self) = @_;
- print $self->handle "Some header\n";
+ my $fh = $self->handle;
+ print $fh "Some footer\n";
 
 Since this hook is indirectly called by write(), locking is already done.
 
@@ -539,8 +541,9 @@ Will be called by after a new file is created. Code will be passed ($self).
 This hook can be used to write a header to each file, e.g.:
 
  # hook_after_create
- my ($self, $filename, $fh) = @_;
- print $self-
+ my ($self) = @_;
+ my $fh $self->handle;
+ print $fh "header\n";
 
 Since this is called indirectly by write(), locking is also already done.
 
