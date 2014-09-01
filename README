@@ -2,8 +2,8 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    This document describes version 0.20 of File::Write::Rotate (from Perl
-    distribution File-Write-Rotate), released on 2014-08-22.
+    This document describes version 0.21 of File::Write::Rotate (from Perl
+    distribution File-Write-Rotate), released on 2014-09-01.
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -37,7 +37,7 @@ DESCRIPTION
     Tie::Handle::FileWriteRotate).
 
 ATTRIBUTES
-  buffer_size => INT
+  buffer_size => int
     Get or set buffer size. If set to a value larger than 0, then when a
     write() failed, instead of dying, the message will be stored in an
     internal buffer first (a regular Perl array). When the number of items
@@ -53,6 +53,52 @@ ATTRIBUTES
     succeed and flush the buffer to disk (provided there is no other error
     condition, of course).
 
+  path => str (ro)
+    Current file's path.
+
+  handle => (ro)
+    Current file handle. You should not use this directly under special
+    circumstances (e.g. in hooks).
+
+  hook_before_write => code
+    Will be called by write() before actually writing to filehandle (but
+    after locking is done). Code will be passed ($self, \@msgs, $fh) where
+    @msgs is an array of strings to be written (the contents of buffer, if
+    any, plus arguments passed to write()) and $fh is the filehandle.
+
+  hook_before_rotate => code
+    Will be called by the rotating routine before actually doing rotating.
+    Code will be passed ($self).
+
+    This can be used to write a footer to the end of each file, e.g.:
+
+     # hook_before_rotate
+     my ($self) = @_;
+     print $self->handle "Some header\n";
+
+    Since this hook is indirectly called by write(), locking is already
+    done.
+
+  hook_after_rotate => code
+    Will be called by the rotating routine after the rotating process. Code
+    will be passed ($self, \@renamed, \@deleted) where @renamed is array of
+    new filenames that have been renamed, @deleted is array of new filenames
+    that have been deleted.
+
+  hook_after_create => code
+    Will be called by after a new file is created. Code will be passed
+    ($self).
+
+    This hook can be used to write a header to each file, e.g.:
+
+     # hook_after_create
+     my ($self, $filename, $fh) = @_;
+     print $self-
+
+    Since this is called indirectly by write(), locking is also already
+    done.
+
+  
 METHODS
   $obj = File::Write::Rotate->new(%args)
     Create new object. Known arguments:
@@ -155,7 +201,7 @@ METHODS
     be done again on the next "write()" if necessary.
 
 FAQ
-  Why use autorotating log?
+  Why use autorotating file?
     Mainly convenience and low maintenance. You no longer need a separate
     rotator like the Unix logrotate utility (which when accidentally
     disabled or misconfigured will cause your logs to stop being rotated and
@@ -164,12 +210,12 @@ FAQ
   What is the downside of using FWR (and LDFR)?
     Mainly performance overhead, as every write() involves locking to make
     it safe to use with multiple processes. Tested on my Core i5 3.1 GHz
-    desktop, writing log lines in the size of ~ 200 bytes, raw writing to
-    disk (SSD) has the speed of around 3.4mil/s, while using FWR it comes
-    down to around 19.5k/s.
+    desktop, writing lines in the size of ~ 200 bytes, raw writing to disk
+    (SSD) has the speed of around 3.4mil/s, while using FWR it comes down to
+    around 19.5k/s.
 
     However, this is not something you'll notice or need to worry about
-    unless you're logging near that speed.
+    unless you're writing near that speed.
 
 TODO
     Perhaps an option to disable locking.
@@ -202,7 +248,7 @@ SEE ALSO
         Using separate processes like the Unix logrotate utility means
         having to deal with yet another race condition. FWR takes care of
         that for you (see the compress() method). You also have the option
-        to do log compression in the same script/process if you want, which
+        to do file compression in the same script/process if you want, which
         is convenient.
 
     There is no significant overhead difference between FWR and LDFR (FWR is
@@ -217,7 +263,7 @@ HOMEPAGE
 
 SOURCE
     Source repository is at
-    <https://github.com/sharyanto/perl-File-Write-Rotate>.
+    <https://github.com/perlancar/perl-File-Write-Rotate>.
 
 BUGS
     Please report any bugs or feature requests on the bugtracker website
@@ -227,10 +273,10 @@ BUGS
     to an existing test-file that illustrates the bug or desired feature.
 
 AUTHOR
-    Steven Haryanto <stevenharyanto@gmail.com>
+    perlancar <perlancar@cpan.org>
 
 COPYRIGHT AND LICENSE
-    This software is copyright (c) 2014 by Steven Haryanto.
+    This software is copyright (c) 2014 by perlancar@cpan.org.
 
     This is free software; you can redistribute it and/or modify it under
     the same terms as the Perl 5 programming language system itself.

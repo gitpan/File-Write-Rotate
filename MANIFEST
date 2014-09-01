@@ -13,5 +13,6 @@ t/release-pod-coverage.t
 t/release-pod-syntax.t
 t/release-rinci.t
 t/rotate.t
+t/todo.t
 t/write.t
 weaver.ini
