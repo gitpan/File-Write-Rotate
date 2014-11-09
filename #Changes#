@@ -2,9 +2,9 @@ Revision history for File-Write-Rotate
 
 0.23    2014-11-09 (PERLANCAR)
 
-	- compress() now unlinks uncompressed originals (this is the
-	  original behavior before switching from using gzip utility to
-	  IO::Compress::Gzip).
+        - 
+
+        - POD fixes.
 
 
 0.22    2014-09-01 (PERLANCAR)

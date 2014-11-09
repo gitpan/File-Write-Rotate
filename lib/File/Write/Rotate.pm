@@ -12,7 +12,7 @@ use Time::HiRes 'time';
 use IO::Compress::Gzip qw(gzip $GzipError);
 use File::Spec;
 
-our $VERSION = '0.22'; # VERSION
+our $VERSION = '0.23'; # VERSION
 our $Debug;
 
 sub new {
@@ -112,7 +112,7 @@ sub _file_path {
 
 sub lock_file_path {
     my ($self) = @_;
-    join( '', $self->{dir}, '/', $self->{prefix}, '.lck' );
+    return File::Spec->catfile($self->{dir}, $self->{prefix} . '.lck');
 }
 
 sub _lock {
@@ -406,7 +406,8 @@ sub compress {
                 my $dir = $self->{dir};
                 foreach my $file (@tocompress) {
                     gzip( $file => File::Spec->catfile( $dir, "$file.gz" ) )
-                        or warn "gzip failed: $GzipError\n";
+                        or do { warn "gzip failed: $GzipError\n"; next };
+                    unlink $file;
                 }
                 $done_compression = 1;
             }
@@ -442,7 +443,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.22 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-09-01.
+This document describes version 0.23 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-11-09.
 
 =head1 SYNOPSIS
 
@@ -463,8 +464,14 @@ This document describes version 0.22 of File::Write::Rotate (from Perl distribut
  $fwr->write("This is a line\n");
  $fwr->write("This is", " another line\n");
 
- # compress old log files
+To compressing old log files:
+
  $fwr->compress;
+
+This is usually done in a separate process, because it potentially takes a long
+time if the files to compress are large; we are rotating automatically in
+write() so doing automatic compression too would annoyingly block writer for a
+potentially long time.
 
 =head1 DESCRIPTION
 
@@ -476,7 +483,7 @@ certain size is reached), by time (daily/monthly/yearly), or both.
 I first wrote this module for logging script STDERR output to files (see
 L<Tie::Handle::FileWriteRotate>).
 
-=for Pod::Coverage ^(file_path|lock_file_path|DESTROY)$
+=for Pod::Coverage ^(file_path|DESTROY)$
 
 =head1 ATTRIBUTES
 
@@ -546,8 +553,6 @@ This hook can be used to write a header to each file, e.g.:
  print $fh "header\n";
 
 Since this is called indirectly by write(), locking is also already done.
-
-=head2
 
 =head1 METHODS
 
@@ -634,6 +639,11 @@ information.
 
 =back
 
+=head2 lock_file_path => STR
+
+Returns a string representing the complete pathname to the lock file, based
+on C<dir> and C<prefix> attributes.
+
 =head2 $fwr->write(@args)
 
 Write to file. Will automatically rotate file if period changes or file size
@@ -646,8 +656,9 @@ Does not append newline so you'll have to do it yourself.
 
 =head2 $fwr->compress
 
-Compress old rotated files. Currently uses L<IO::Compress::Gzip> to do the
-compression. Extension given to compressed file is C<.gz>.
+Compress old rotated files and remove the uncompressed originals. Currently uses
+L<IO::Compress::Gzip> to do the compression. Extension given to compressed file
+is C<.gz>.
 
 Will not lock writers, but will create C<< <prefix> >>C<-compress.pid> PID file
 to prevent multiple compression processes running and to signal the writers to
@@ -722,7 +733,7 @@ Please visit the project's homepage at L<https://metacpan.org/release/File-Write
 
 =head1 SOURCE
 
-Source repository is at L<https://github.com/perlancar/perl-File-Write-Rotate>.
+Source repository is at L<https://github.com/sharyanto/perl-File-Write-Rotate>.
 
 =head1 BUGS
 

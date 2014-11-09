@@ -2,8 +2,8 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    This document describes version 0.22 of File::Write::Rotate (from Perl
-    distribution File-Write-Rotate), released on 2014-09-01.
+    This document describes version 0.23 of File::Write::Rotate (from Perl
+    distribution File-Write-Rotate), released on 2014-11-09.
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -23,8 +23,14 @@ SYNOPSIS
      $fwr->write("This is a line\n");
      $fwr->write("This is", " another line\n");
 
-     # compress old log files
+    To compressing old log files:
+
      $fwr->compress;
+
+    This is usually done in a separate process, because it potentially takes
+    a long time if the files to compress are large; we are rotating
+    automatically in write() so doing automatic compression too would
+    annoyingly block writer for a potentially long time.
 
 DESCRIPTION
     This module can be used to write to file, usually for logging, that can
@@ -101,7 +107,6 @@ ATTRIBUTES
     Since this is called indirectly by write(), locking is also already
     done.
 
-  
 METHODS
   $obj = File::Write::Rotate->new(%args)
     Create new object. Known arguments:
@@ -182,6 +187,10 @@ METHODS
         Set initial value of buffer. See the "buffer_size" attribute for
         more information.
 
+  lock_file_path => STR
+    Returns a string representing the complete pathname to the lock file,
+    based on "dir" and "prefix" attributes.
+
   $fwr->write(@args)
     Write to file. Will automatically rotate file if period changes or file
     size exceeds specified limit. When rotating, will only keep a specified
@@ -193,8 +202,9 @@ METHODS
     Does not append newline so you'll have to do it yourself.
 
   $fwr->compress
-    Compress old rotated files. Currently uses IO::Compress::Gzip to do the
-    compression. Extension given to compressed file is ".gz".
+    Compress old rotated files and remove the uncompressed originals.
+    Currently uses IO::Compress::Gzip to do the compression. Extension given
+    to compressed file is ".gz".
 
     Will not lock writers, but will create "<prefix>""-compress.pid" PID
     file to prevent multiple compression processes running and to signal the
@@ -266,7 +276,7 @@ HOMEPAGE
 
 SOURCE
     Source repository is at
-    <https://github.com/perlancar/perl-File-Write-Rotate>.
+    <https://github.com/sharyanto/perl-File-Write-Rotate>.
 
 BUGS
     Please report any bugs or feature requests on the bugtracker website
