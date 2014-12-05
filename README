@@ -2,8 +2,8 @@ NAME
     File::Write::Rotate - Write to files that archive/rotate themselves
 
 VERSION
-    This document describes version 0.23 of File::Write::Rotate (from Perl
-    distribution File-Write-Rotate), released on 2014-11-09.
+    This document describes version 0.24 of File::Write::Rotate (from Perl
+    distribution File-Write-Rotate), released on 2014-12-05.
 
 SYNOPSIS
      use File::Write::Rotate;
@@ -187,6 +187,16 @@ METHODS
         Set initial value of buffer. See the "buffer_size" attribute for
         more information.
 
+    *   hook_before_write => CODE
+
+    *   hook_before_rotate => CODE
+
+    *   hook_after_rotate => CODE
+
+    *   hook_after_create => CODE
+
+        See "ATTRIBUTES".
+
   lock_file_path => STR
     Returns a string representing the complete pathname to the lock file,
     based on "dir" and "prefix" attributes.
@@ -276,7 +286,7 @@ HOMEPAGE
 
 SOURCE
     Source repository is at
-    <https://github.com/sharyanto/perl-File-Write-Rotate>.
+    <https://github.com/perlancar/perl-File-Write-Rotate>.
 
 BUGS
     Please report any bugs or feature requests on the bugtracker website
