@@ -29,8 +29,8 @@
       },
       "runtime" : {
          "requires" : {
+            "File::Flock::Retry" : "0",
             "Proc::PID::File" : "0",
-            "SHARYANTO::File::Flock" : "0.50",
             "Taint::Runtime" : "0.03",
             "perl" : "5.010001"
          }
@@ -62,7 +62,7 @@
          "web" : "https://github.com/perlancar/perl-File-Write-Rotate"
       }
    },
-   "version" : "0.24",
+   "version" : "0.25",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.018002"

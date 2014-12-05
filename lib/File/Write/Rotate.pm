@@ -1,5 +1,8 @@
 package File::Write::Rotate;
 
+our $DATE = '2014-12-05'; # DATE
+our $VERSION = '0.25'; # VERSION
+
 use 5.010001;
 use strict;
 use warnings;
@@ -7,13 +10,12 @@ use warnings;
 # we must not use Log::Any, looping if we are used as log output
 #use Log::Any '$log';
 
+use File::Spec;
+use IO::Compress::Gzip qw(gzip $GzipError);
+use Scalar::Util qw(weaken);
 use Taint::Runtime qw(untaint is_tainted);
 use Time::HiRes 'time';
-use IO::Compress::Gzip qw(gzip $GzipError);
-use File::Spec;
-use Scalar::Util qw(weaken);
 
-our $VERSION = '0.24'; # VERSION
 our $Debug;
 
 sub new {
@@ -120,8 +122,8 @@ sub _get_lock {
     my ($self) = @_;
     return $self->{_weak_lock} if defined($self->{_weak_lock});
 
-    require SHARYANTO::File::Flock;
-    my $lock = SHARYANTO::File::Flock->lock( $self->lock_file_path );
+    require File::Flock::Retry;
+    my $lock = File::Flock::Retry->lock( $self->lock_file_path );
     $self->{_weak_lock} = $lock;
     weaken $self->{_weak_lock};
     return $lock;
@@ -438,7 +440,7 @@ File::Write::Rotate - Write to files that archive/rotate themselves
 
 =head1 VERSION
 
-This document describes version 0.24 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-12-05.
+This document describes version 0.25 of File::Write::Rotate (from Perl distribution File-Write-Rotate), released on 2014-12-05.
 
 =head1 SYNOPSIS
 

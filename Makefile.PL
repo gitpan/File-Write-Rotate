@@ -21,8 +21,8 @@ my %WriteMakefileArgs = (
   "MIN_PERL_VERSION" => "5.010001",
   "NAME" => "File::Write::Rotate",
   "PREREQ_PM" => {
+    "File::Flock::Retry" => 0,
     "Proc::PID::File" => 0,
-    "SHARYANTO::File::Flock" => "0.50",
     "Taint::Runtime" => "0.03"
   },
   "TEST_REQUIRES" => {
@@ -37,7 +37,7 @@ my %WriteMakefileArgs = (
     "Test::Warnings" => "0.014",
     "tainting" => "0.01"
   },
-  "VERSION" => "0.24",
+  "VERSION" => "0.25",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -46,6 +46,7 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "ExtUtils::MakeMaker" => 0,
+  "File::Flock::Retry" => 0,
   "File::Slurp::Tiny" => 0,
   "File::Spec" => 0,
   "File::chdir" => 0,
@@ -53,7 +54,6 @@ my %FallbackPrereqs = (
   "IPC::Open3" => 0,
   "Monkey::Patch::Action" => 0,
   "Proc::PID::File" => 0,
-  "SHARYANTO::File::Flock" => "0.50",
   "Taint::Runtime" => "0.03",
   "Test::Exception" => "0.31",
   "Test::More" => "0.98",
